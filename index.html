@@ -4,8 +4,16 @@
 <meta charset="UTF-8">
 <title>ラブキャッチ完成版</title>
 <style>
-body { margin:0; overflow:hidden; background:#fff0f5; }
-canvas { display:block; }
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: #fff0f5;
+    font-family: sans-serif;
+  }
+
+  canvas {
+    display: block;
+  }
 </style>
 </head>
 <body>
@@ -22,11 +30,6 @@ const bgm = new Audio("bgm.mp3");
 bgm.loop = true;
 bgm.volume = 0.5;
 
-// 最初のクリックで再生
-document.addEventListener("click", () => {
-  bgm.play();
-}, { once: true });
-
 // 画像読み込み
 const imgBaby = new Image();
 imgBaby.src = "baby.png";
@@ -36,11 +39,36 @@ imgAfro.src = "afro.png";
 
 const imgProf = new Image();
 imgProf.src = "prof.png";
+
+// ▶ スタートボタン
+const startBtn = document.createElement("button");
+startBtn.innerText = "▶ スタート";
+startBtn.style.position = "absolute";
+startBtn.style.top = "50%";
+startBtn.style.left = "50%";
+startBtn.style.transform = "translate(-50%, -50%)";
+startBtn.style.fontSize = "24px";
+startBtn.style.padding = "14px 28px";
 startBtn.style.background = "#ff6b81";
 startBtn.style.color = "#fff";
 startBtn.style.border = "none";
-startBtn.style.borderRadius = "10px";
-// 画像チェック
+startBtn.style.borderRadius = "12px";
+startBtn.style.boxShadow = "0 4px 10px rgba(0,0,0,0.2)";
+startBtn.style.cursor = "pointer";
+startBtn.style.zIndex = "10";
+document.body.appendChild(startBtn);
+
+let gameStarted = false;
+
+startBtn.addEventListener("click", () => {
+  bgm.play().catch(err => {
+    console.log("BGM再生エラー:", err);
+  });
+  startBtn.remove();
+  gameStarted = true;
+});
+
+// 画像が読み込めてるかチェック
 function drawItem(item) {
   if (item.img.complete && item.img.naturalWidth !== 0) {
     ctx.drawImage(item.img, item.x, item.y, item.size, item.size);
@@ -53,7 +81,13 @@ function drawItem(item) {
   }
 }
 
-let basket = { x: canvas.width / 2, y: canvas.height - 100, w: 120, h: 30 };
+let basket = {
+  x: canvas.width / 2,
+  y: canvas.height - 100,
+  w: 120,
+  h: 30
+};
+
 let items = [];
 let score = 0;
 
@@ -62,10 +96,14 @@ document.addEventListener("mousemove", e => {
 });
 
 document.addEventListener("touchmove", e => {
-  basket.x = e.touches[0].clientX - basket.w / 2;
-});
+  if (e.touches.length > 0) {
+    basket.x = e.touches[0].clientX - basket.w / 2;
+  }
+}, { passive: true });
 
 function spawnItem() {
+  if (!gameStarted) return;
+
   let rand = Math.random();
   let type = "prof";
   let img = imgProf;
@@ -82,7 +120,7 @@ function spawnItem() {
   }
 
   items.push({
-    x: Math.random() * canvas.width,
+    x: Math.random() * (canvas.width - 80),
     y: -80,
     size: 80,
     type: type,
@@ -99,6 +137,7 @@ function update() {
   ctx.fillStyle = "#ff6b81";
   ctx.fillRect(basket.x, basket.y, basket.w, basket.h);
 
+  // アイテム
   items.forEach((item, i) => {
     item.y += item.speed;
     drawItem(item);
@@ -118,11 +157,13 @@ function update() {
       items.splice(i, 1);
     }
 
+    // 画面外に出たら削除
     if (item.y > canvas.height) {
       items.splice(i, 1);
     }
   });
 
+  // スコア表示
   ctx.fillStyle = "#333";
   ctx.font = "28px sans-serif";
   ctx.fillText("Love: " + score, 20, 40);
@@ -132,7 +173,13 @@ function update() {
 
 setInterval(spawnItem, 900);
 update();
+
+// 画面サイズ変更対応
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  basket.y = canvas.height - 100;
+});
 </script>
 </body>
 </html>
-最後にスペース
